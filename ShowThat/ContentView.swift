@@ -356,7 +356,7 @@ struct ContentView: View {
                     .onDisappear {
                         if logoImage != nil {
                             toastMessage = "Logo added successfully!"
-                            toastType = .info
+                            toastType = .success
                             withAnimation(.spring()) {
                                 showToast = true
                             }
