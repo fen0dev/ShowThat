@@ -111,9 +111,10 @@ struct AuthenticationView: View {
                                         .tint(.white)
                                         .scaleEffect(0.8)
                                 } else {
-                                    Image(systemName: isSignUp ? "person.badge.plus" : "arrow.right.circle.fill")
                                     Text(isSignUp ? "Create Account" : "Sign In")
                                         .fontWeight(.semibold)
+
+                                    Image(systemName: isSignUp ? "person.badge.plus" : "arrow.right.circle.fill")
                                 }
                             }
                             .foregroundStyle(.white)
