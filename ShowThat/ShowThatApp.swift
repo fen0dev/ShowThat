@@ -20,6 +20,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct ShowThatApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authState = AuthState()
+    
+    init() {
+        configureAppearance()
+    }
+    
     var body: some Scene {
         WindowGroup {
             RootView()

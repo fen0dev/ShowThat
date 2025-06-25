@@ -8,22 +8,35 @@
 import SwiftUI
 
 struct ToastView: View {
-    let message: String
-    let type: ContentView.ToastStyle
-    @Binding var isShowing: Bool
+    let config: ToastConfig
+    @Binding var isPresented: Bool
+    @State private var animateIn = false
+    
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: type.icon)
+            Image(systemName: config.type.icon)
                 .font(.title2)
                 .foregroundStyle(.white)
             
-            Text(message)
+            Text(config.message)
                 .font(.body)
                 .fontWeight(.medium)
                 .foregroundStyle(.white)
                 .lineLimit(2)
             
             Spacer()
+            
+            Button(action: {
+                withAnimation(.spring()) {
+                    isPresented = false
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(4)
+                    .background(Circle().fill(.white.opacity(0.2)))
+            }
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
@@ -31,33 +44,35 @@ struct ToastView: View {
             Capsule()
                 .fill(
                     LinearGradient(
-                        colors: [type.color, type.color.opacity(0.8)],
+                        colors: [config.type.color, config.type.color.opacity(0.8)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: type.color.opacity(0.3), radius: 20, y: 10)
+                .shadow(color: config.type.color.opacity(0.3), radius: 20, y: 10)
         }
         .padding(.horizontal)
-        .transition(.asymmetric(
-            insertion: .move(edge: .top).combined(with: .opacity),
-            removal: .move(edge: .top).combined(with: .opacity)
-        ))
-        .onTapGesture {
+        .offset(y: animateIn ? 0 : -100)
+        .opacity(animateIn ? 1 : 0)
+        .onAppear {
             withAnimation(.spring()) {
-                isShowing = false
+                animateIn = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) {
+                withAnimation(.spring()) {
+                    isPresented = false
+                }
             }
         }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation(.spring()) {
-                    isShowing = false
-                }
+        .onTapGesture {
+            withAnimation(.spring()) {
+                isPresented = false
             }
         }
     }
 }
 
 #Preview {
-    ToastView(message: "QR code generated", type: .success, isShowing: .constant(true))
+    ToastView(config: ToastConfig(message: "QR Code generated successfully", type: .success, duration: Double(0.5)), isPresented: .constant(true))
 }

@@ -12,7 +12,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if authState.isAuthenticated {
-                ContentView()
+                DashboardView()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing),
                         removal: .move(edge: .leading)
@@ -25,6 +25,8 @@ struct RootView: View {
                     ))
             }
         }
+        .animation(.spring(), value: authState.isAuthenticated)
+        .withAlerts()
     }
 }
 

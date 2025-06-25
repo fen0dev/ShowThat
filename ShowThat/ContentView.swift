@@ -368,20 +368,6 @@ struct ContentView: View {
                     ShareSheet(items: [qrImage])
                 }
             }
-            .overlay {
-                VStack {
-                    if showToast {
-                        ToastView(
-                            message: toastMessage,
-                            type: toastType,
-                            isShowing: $showToast
-                        )
-                        .padding(.top)
-                    }
-                    Spacer()
-                }
-                .animation(.spring(), value: showToast)
-            }
         }
     }
     
