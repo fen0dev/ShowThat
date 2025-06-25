@@ -28,7 +28,7 @@ struct ShowThatApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootView()
+            ContentView()
                 .environmentObject(authState)
                 .environmentObject(qrManager)
                 .preferredColorScheme(.light)
