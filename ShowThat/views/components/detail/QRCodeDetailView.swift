@@ -50,8 +50,8 @@ struct QRCodeDetailView: View {
                     if isLoadingAnalytics {
                         ProgressView("Loading Analytics...")
                             .padding()
-                    } else if let analytics = analytics {
-                        AnalyticsView(analytics: analytics)
+                    } else {
+                        AnalyticsView()
                     }
                     
                     // details section

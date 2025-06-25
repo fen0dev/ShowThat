@@ -9,7 +9,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct DashboardView: View {
-    @StateObject private var viewModel = QRCodeManager()
+    @EnvironmentObject var viewModel: QRCodeManager
     @State private var selectedTab = 0
     @State private var showingCreateSheet = false
     @State private var showingUpgradeSheet = false
@@ -83,7 +83,8 @@ struct DashboardView: View {
                 UpgradeView(qrManager: viewModel)
             })
             .sheet(isPresented: $showingProfileSheet, content: {
-                ProfileSettingsView(qrManager: viewModel)
+                ProfileSettingsView()
+                    .environmentObject(QRCodeManager())
             })
             .overlay(alignment: .bottomTrailing) {
                 if !filteredQRCodes.isEmpty {
@@ -130,41 +131,6 @@ struct DashboardView: View {
             }
             
             Spacer()
-            
-            // Profile button
-            Menu {
-                Label(viewModel.userProfile?.email ?? "Profile", systemImage: "person.circle")
-                    .font(.headline)
-                
-                Divider()
-                
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showingProfileSheet = true
-                    }
-                }) {
-                    Label("Settings", systemImage: "gearshape")
-                }
-                
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showingUpgradeSheet = true
-                    }
-                }) {
-                    Label("Upgrade Plan", systemImage: "crown")
-                }
-                
-                Divider()
-                
-                Button(action: { signOut() }) {
-                    Label("Sign Out", systemImage: "arrow.right.square")
-                        .foregroundColor(.red)
-                }
-            } label: {
-                Image(systemName: "person.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(.gray)
-            }
         }
         .padding(.horizontal)
         .padding(.top, 50)
@@ -227,7 +193,7 @@ struct DashboardView: View {
         .padding()
         .background {
             RoundedRectangle(cornerRadius: 15)
-                .fill(.ultraThinMaterial)
+                .fill(.white.opacity(0.7))
                 .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
         }
     }
@@ -333,4 +299,5 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
+        .environmentObject(QRCodeManager())
 }

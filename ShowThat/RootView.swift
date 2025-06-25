@@ -12,7 +12,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if authState.isAuthenticated {
-                DashboardView()
+                MainTabView()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing),
                         removal: .move(edge: .leading)

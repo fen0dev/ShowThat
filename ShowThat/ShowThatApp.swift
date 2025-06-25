@@ -20,6 +20,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct ShowThatApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authState = AuthState()
+    @StateObject private var qrManager = QRCodeManager()
     
     init() {
         configureAppearance()
@@ -29,6 +30,7 @@ struct ShowThatApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(authState)
+                .environmentObject(qrManager)
                 .preferredColorScheme(.light)
         }
     }
