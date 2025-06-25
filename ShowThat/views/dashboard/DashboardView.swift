@@ -105,7 +105,6 @@ struct DashboardView: View {
                         }
                     }
                     .padding()
-                    .padding(.bottom, 30)
                 }
             }
         }
