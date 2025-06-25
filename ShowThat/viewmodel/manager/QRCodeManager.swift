@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import StoreKit
 import Foundation
 import FirebaseAuth
 import FirebaseStorage
@@ -35,7 +36,20 @@ class QRCodeManager: ObservableObject {
     }
     
     var currentSubscription: UserSubscription? {
-        userProfile?.subscription
+        // First check StoreKit for active subscription
+        if let storeTier = PaymentManager.shared.currentSubscription {
+            // Return a subscription object based on StoreKit status
+            return UserSubscription(
+                tier: storeTier,
+                startDate: Date(),
+                endDate: nil,
+                isActive: true,
+                subscriptionId: nil,
+                customerId: nil
+            )
+        }
+        // Fall back to Firebase stored subscription
+        return userProfile?.subscription
     }
     
     init() {

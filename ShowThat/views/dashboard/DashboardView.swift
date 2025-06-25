@@ -138,64 +138,9 @@ struct DashboardView: View {
     }
     
     private var subscriptionStatusCard: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "crown.fill")
-                        .foregroundColor(viewModel.currentSubscription?.tier == .free ? .gray : .yellow)
-                    
-                    Text(viewModel.currentSubscription?.tier.rawValue ?? "Free")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
-                
-                // usage indicator
-                HStack(spacing: 20) {
-                    UsageIndicator(
-                        current: viewModel.qrCodes.filter { !$0.isDynamic }.count,
-                        limit: viewModel.currentSubscription?.tier.qrLimit ?? 3,
-                        label: "QR Codes"
-                    )
-                    
-                    if (viewModel.currentSubscription?.tier.dynamicQRLimit ?? 0) > 0 {
-                        UsageIndicator(
-                            current: viewModel.qrCodes.filter { $0.isDynamic }.count,
-                            limit: viewModel.currentSubscription?.tier.dynamicQRLimit ?? 0,
-                            label: "Dynamic"
-                        )
-                    }
-                }
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                withAnimation(.spring()) {
-                    showingUpgradeSheet = true
-                }
-            }) {
-                Text("Upgrade")
-                    .font(.caption.bold())
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background {
-                        LinearGradient(
-                            colors: [.purple, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    }
-                    .cornerRadius(20)
-            }
-        }
-        .padding()
-        .background {
-            RoundedRectangle(cornerRadius: 15)
-                .fill(.white.opacity(0.7))
-                .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
-        }
+        SubscriptionStatusView()
+            .environmentObject(viewModel)
+            .environmentObject(PaymentManager.shared)
     }
     
     private var searchBar: some View {
@@ -217,7 +162,7 @@ struct DashboardView: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white)
-                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
         )
     }
     
@@ -283,7 +228,7 @@ struct DashboardView: View {
                     .shadow(color: .purple.opacity(0.3), radius: 10, y: 5)
             }
         }
-        .padding(.top, 60)
+        .padding(.top, 35)
     }
     
     // MARK: - Actions
@@ -300,4 +245,5 @@ struct DashboardView: View {
 #Preview {
     DashboardView()
         .environmentObject(QRCodeManager())
+        .environmentObject(PaymentManager.shared)
 }

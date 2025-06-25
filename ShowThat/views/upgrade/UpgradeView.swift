@@ -6,17 +6,28 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct UpgradeView: View {
     let qrManager: QRCodeManager
     
     @Environment(\.dismiss) var dismiss
-    @State private var selectedTier: UserSubscription.Tier = .pro
-    @State private var showingPurchaseAlert = false
+    @EnvironmentObject var paymentManager: PaymentManager
+    @State private var selectedProduct: Product?
+    @State private var isPurchasing = false
+    @State private var showingRestoreAlert = false
     
     var currentTier: UserSubscription.Tier {
         qrManager.currentSubscription?.tier ?? .free
     }
+    
+    var sortedProducts: [Product] {
+        paymentManager.products.sorted { first, second in
+            // Sort by price ascending
+            first.price < second.price
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -32,131 +43,305 @@ struct UpgradeView: View {
                 )
                 .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 30) {
-                        // Header
-                        VStack(spacing: 15) {
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 60))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [.yellow, .orange],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .shadow(color: .yellow.opacity(0.5), radius: 20)
-                            
-                            Text("Unlock Premium Features")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                            
-                            Text("Choose the plan that works best for you")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        .padding(.top, 40)
+                if paymentManager.isLoading && paymentManager.products.isEmpty {
+                    // Loading State
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
                         
-                        // Subscription Cards
-                        VStack(spacing: 20) {
-                            ForEach([UserSubscription.Tier.pro, .business, .enterprise], id: \.self) { tier in
-                                SubscriptionCard(
-                                    tier: tier,
-                                    isSelected: selectedTier == tier,
-                                    isCurrent: currentTier == tier,
-                                    action: {
-                                        withAnimation(.spring()) {
-                                            selectedTier = tier
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
+                        Text("Loading subscription options...")
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                } else if paymentManager.products.isEmpty {
+                    // Error State
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 50))
+                            .foregroundColor(.yellow)
                         
-                        // Subscribe Button
-                        Button(action: subscribe) {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                
-                                Text(currentTier == selectedTier ? "Current Plan" : "Upgrade to \(selectedTier.rawValue)")
-                                    .fontWeight(.semibold)
-                                
-                                Image(systemName: "sparkles")
-                            }
+                        Text("Unable to load subscriptions")
+                            .font(.headline)
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 20)
-                            .background(
-                                LinearGradient(
-                                    colors: currentTier == selectedTier ? [.gray] : [.purple, .blue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(20)
-                            .shadow(
-                                color: currentTier == selectedTier ? .clear : .purple.opacity(0.5),
-                                radius: 20,
-                                y: 10
-                            )
-                        }
-                        .padding(.horizontal)
-                        .disabled(currentTier == selectedTier)
                         
-                        // Restore Purchases
-                        Button("Restore Purchases") {
-                            // Implement restore
+                        Text("Please check your internet connection")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Button("Try Again") {
+                            Task {
+                                await paymentManager.loadProducts()
+                            }
                         }
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 40)
+                        .buttonStyle(PrimaryButtonStyle())
+                    }
+                } else {
+                    // Main Content
+                    ScrollView {
+                        VStack(spacing: 30) {
+                            // Header
+                            headerView
+                            
+                            // Subscription Cards
+                            VStack(spacing: 20) {
+                                ForEach(sortedProducts, id: \.id) { product in
+                                    if let tier = tierForProduct(product) {
+                                        SubscriptionCard(
+                                            product: product,
+                                            tier: tier,
+                                            isSelected: selectedProduct?.id == product.id,
+                                            isCurrent: currentTier == tier,
+                                            isPurchased: paymentManager.isSubscribed(to: tier),
+                                            action: {
+                                                withAnimation(.spring()) {
+                                                    selectedProduct = product
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // Subscribe Button
+                            subscribeButton
+                            
+                            // Footer Actions
+                            footerActions
+                        }
                     }
                 }
             }
             .navigationBarHidden(true)
             .overlay(alignment: .topTrailing) {
-                // Close Button
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white.opacity(0.6), .white.opacity(0.2))
-                }
-                .padding()
+                closeButton
             }
-            .alert("Upgrade to \(selectedTier.rawValue)", isPresented: $showingPurchaseAlert) {
-                Button("Subscribe - $\(selectedTier.price, specifier: "%.2f")/mo") {
-                    completeUpgrade()
-                }
-                Button("Cancel", role: .cancel) { }
+            .alert("Restore Purchases", isPresented: $showingRestoreAlert) {
+                Button("OK") { }
             } message: {
-                Text("You'll be charged $\(selectedTier.price, specifier: "%.2f") monthly. Cancel anytime.")
+                Text(paymentManager.purchasedSubscriptions.isEmpty ?
+                     "No active subscriptions found" :
+                     "Your purchases have been restored successfully")
+            }
+        }
+        .task {
+            // Load products if not already loaded
+            if paymentManager.products.isEmpty {
+                await paymentManager.loadProducts()
+            }
+            
+            // Pre-select current tier or Pro
+            if let currentProduct = paymentManager.product(for: currentTier) {
+                selectedProduct = currentProduct
+            } else if let proProduct = paymentManager.product(for: .pro) {
+                selectedProduct = proProduct
             }
         }
     }
     
-    private func subscribe() {
-        showingPurchaseAlert = true
+    // MARK: - View Components
+    
+    private var headerView: some View {
+        VStack(spacing: 15) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.yellow, .orange],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: .yellow.opacity(0.5), radius: 20)
+            
+            Text("Unlock Premium Features")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            
+            Text("Choose the plan that works best for you")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .padding(.top, 40)
     }
     
-    private func completeUpgrade() {
+    private var subscribeButton: some View {
+        Group {
+            if let product = selectedProduct {
+                Button(action: { purchaseProduct(product) }) {
+                    HStack {
+                        if isPurchasing {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "sparkles")
+                            
+                            Text(subscribeButtonText(for: product))
+                                .fontWeight(.semibold)
+                            
+                            Image(systemName: "sparkles")
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(
+                        LinearGradient(
+                            colors: buttonColors(for: product),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(20)
+                    .shadow(
+                        color: buttonShadowColor(for: product),
+                        radius: 20,
+                        y: 10
+                    )
+                }
+                .padding(.horizontal)
+                .disabled(isPurchasing || isCurrentTier(product))
+            }
+        }
+    }
+    
+    private var footerActions: some View {
+        VStack(spacing: 15) {
+            Button("Restore Purchases") {
+                restorePurchases()
+            }
+            .foregroundColor(.white.opacity(0.7))
+            
+            // Terms and Privacy
+            HStack(spacing: 20) {
+                Link("Terms of Service", destination: URL(string: "https://showthat.app/terms")!)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+                
+                Link("Privacy Policy", destination: URL(string: "https://showthat.app/privacy")!)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            
+            // Subscription Info
+            Text("Subscriptions auto-renew monthly. Cancel anytime.")
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.4))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+        .padding(.bottom, 40)
+    }
+    
+    private var closeButton: some View {
+        Button(action: { dismiss() }) {
+            Image(systemName: "xmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.white.opacity(0.6), .white.opacity(0.2))
+        }
+        .padding()
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func tierForProduct(_ product: Product) -> UserSubscription.Tier? {
+        guard let productID = PaymentManager.ProductID(rawValue: product.id) else { return nil }
+        return productID.tier
+    }
+    
+    private func isCurrentTier(_ product: Product) -> Bool {
+        guard let tier = tierForProduct(product) else { return false }
+        return currentTier == tier
+    }
+    
+    private func subscribeButtonText(for product: Product) -> String {
+        if isCurrentTier(product) {
+            return "Current Plan"
+        } else if paymentManager.isSubscribed(to: tierForProduct(product) ?? .free) {
+            return "Already Subscribed"
+        } else {
+            return "Subscribe for \(product.displayPrice)/month"
+        }
+    }
+    
+    private func buttonColors(for product: Product) -> [Color] {
+        if isCurrentTier(product) || paymentManager.isSubscribed(to: tierForProduct(product) ?? .free) {
+            return [.gray]
+        } else {
+            return [.purple, .blue]
+        }
+    }
+    
+    private func buttonShadowColor(for product: Product) -> Color {
+        if isCurrentTier(product) || paymentManager.isSubscribed(to: tierForProduct(product) ?? .free) {
+            return .clear
+        } else {
+            return .purple.opacity(0.5)
+        }
+    }
+    
+    // MARK: - Purchase Methods
+    
+    private func purchaseProduct(_ product: Product) {
+        isPurchasing = true
+        
         Task {
             do {
-                try await qrManager.upgradeSubscription(to: selectedTier, subscriptionId: "mock-subscription-id")
+                try await paymentManager.purchase(product)
                 
-                AlertManager.shared.showSuccess(
-                    title: "Welcome to \(selectedTier.rawValue)!",
-                    message: getUpgradeMessage(for: selectedTier),
-                    icon: "crown.fill"
-                ) {
-                    dismiss()
+                // Success
+                await MainActor.run {
+                    AlertManager.shared.showSuccess(
+                        title: "Welcome to Premium!",
+                        message: getUpgradeMessage(for: tierForProduct(product) ?? .pro),
+                        icon: "crown.fill"
+                    ) {
+                        dismiss()
+                    }
+                }
+            } catch PurchaseError.userCancelled {
+                // User cancelled - no action needed
+            } catch PurchaseError.pending {
+                await MainActor.run {
+                    AlertManager.shared.showInfo(
+                        title: "Purchase Pending",
+                        message: "Your purchase is awaiting approval. You'll receive access once it's approved.",
+                        icon: "clock.fill"
+                    )
                 }
             } catch {
-                AlertManager.shared.showError(
-                    title: "Upgrade Failed",
-                    message: "There was an issue processing your upgrade. Please try again."
-                )
+                await MainActor.run {
+                    AlertManager.shared.showError(
+                        title: "Purchase Failed",
+                        message: error.localizedDescription
+                    ) {
+                        // Retry
+                        purchaseProduct(product)
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                isPurchasing = false
+            }
+        }
+    }
+    
+    private func restorePurchases() {
+        Task {
+            do {
+                try await paymentManager.restorePurchases()
+                showingRestoreAlert = true
+            } catch {
+                await MainActor.run {
+                    AlertManager.shared.showError(
+                        title: "Restore Failed",
+                        message: error.localizedDescription
+                    )
+                }
             }
         }
     }
@@ -173,9 +358,28 @@ struct UpgradeView: View {
             return "Welcome to Enterprise! Your dedicated account manager will contact you shortly."
         }
     }
-
 }
 
 #Preview {
     UpgradeView(qrManager: QRCodeManager())
+        .environmentObject(PaymentManager.shared)
+}
+
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(.white)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 15)
+            .background(
+                LinearGradient(
+                    colors: [.purple, .blue],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(25)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+    }
 }

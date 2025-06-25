@@ -21,6 +21,7 @@ struct ShowThatApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authState = AuthState()
     @StateObject private var qrManager = QRCodeManager()
+    @StateObject private var paymentManager = PaymentManager.shared
     
     init() {
         configureAppearance()
@@ -31,6 +32,7 @@ struct ShowThatApp: App {
             ContentView()
                 .environmentObject(authState)
                 .environmentObject(qrManager)
+                .environmentObject(paymentManager)
                 .preferredColorScheme(.light)
         }
     }
