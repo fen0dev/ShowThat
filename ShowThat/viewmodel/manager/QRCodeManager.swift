@@ -52,6 +52,16 @@ class QRCodeManager: ObservableObject {
         return userProfile?.subscription
     }
     
+    var currentSubscriptionTier: UserSubscription.Tier {
+        // store kit is source of truth
+        if let storeKitTier = PaymentManager.shared.currentSubscription {
+            return storeKitTier
+        }
+        
+        // fallback
+        return userProfile?.subscription.tier ?? .free
+    }
+    
     init() {
         setupAuthListener()
     }
@@ -73,6 +83,9 @@ class QRCodeManager: ObservableObject {
                 Task {
                     await self.loadUserProfile(userId: user.uid)
                     self.setupQRCodesListener(userId: user.uid)
+                    
+                    // Set up subscription sync after auth
+                    self.setupSubscriptionSync()
                 }
             } else {
                 self.userProfile = nil
@@ -166,6 +179,54 @@ class QRCodeManager: ObservableObject {
         }
     }
     
+    // synching StoreKit subscription status to firestore
+    @MainActor
+    func syncSubscriptionStatus() async {
+        guard let userId = currentUserId else { return }
+        
+        // get current StoreKit status
+        let storeKitTier = PaymentManager.shared.currentSubscription ?? .free
+        let hasActiveSubscription = PaymentManager.shared.hasActiveSubscription
+        
+        do {
+            let data: [String: Any] = [
+                "subscription.tier": storeKitTier.rawValue,
+                "subscription.active": hasActiveSubscription,
+                "updatedAt": FieldValue.serverTimestamp()
+            ]
+            
+            _ = db.collection("users").document(userId).updateData(data)
+            print("[QRCodeManager] Synced subscription status: \(storeKitTier.rawValue)")
+        }
+    }
+    
+    // Set up subscription sync listeners
+    func setupSubscriptionSync() {
+        // Listen for StoreKit subscription changes
+        NotificationCenter.default.publisher(for: .subscriptionStatusChanged)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.syncSubscriptionStatus()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Listen for app becoming active to refresh status
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in
+                Task {
+                    await PaymentManager.shared.refreshSubscriptionStatus()
+                    await self?.syncSubscriptionStatus()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Initial sync
+        Task {
+            await syncSubscriptionStatus()
+        }
+    }
+    
     // MARK: - QR Code CRUD Operations
     
     func createQRCode(name: String, type: QRCodeType, content: QRContent, style: QRStyle, isDynamic: Bool = false, logoImage: UIImage? = nil) async throws {
@@ -243,6 +304,19 @@ class QRCodeManager: ObservableObject {
         }
         
         Analytics.logEvent("qr_code_updated", parameters: ["qr_id": qrId])
+    }
+    
+    // Get remaining QR codes user can create
+    func remainingQRCodes(isDynamic: Bool) -> Int {
+        let tier = currentSubscriptionTier
+        
+        if isDynamic {
+            let dynamicCount = qrCodes.filter { $0.isDynamic }.count
+            return max(0, tier.dynamicQRLimit - dynamicCount)
+        } else {
+            let staticCount = qrCodes.filter { !$0.isDynamic }.count
+            return max(0, tier.qrLimit - staticCount)
+        }
     }
     
     func deleteQRCode(_ qrCode: QRCodeModel) async throws {
@@ -372,16 +446,14 @@ class QRCodeManager: ObservableObject {
     // MARK: - Subscription Management
     
     func canCreateQRCode(isDynamic: Bool) -> Bool {
-        guard let subscription = currentSubscription else {
-            return !isDynamic && qrCodes.count < 3 // Free tier defaults
-        }
+        let tier = currentSubscriptionTier
         
         if isDynamic {
             let dynamicCount = qrCodes.filter { $0.isDynamic }.count
-            return dynamicCount < subscription.tier.dynamicQRLimit
+            return dynamicCount < tier.dynamicQRLimit
         } else {
             let staticCount = qrCodes.filter { !$0.isDynamic }.count
-            return staticCount < subscription.tier.qrLimit
+            return staticCount < tier.qrLimit
         }
     }
     

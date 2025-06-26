@@ -1,0 +1,79 @@
+//
+//  ShowThat.storekit
+//  ShowThat
+//
+//  Created by Giuseppe De Masi on 26/06/2025.
+//
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>identifier</key>
+    <string>ShowThat</string>
+    <key>displayName</key>
+    <string>ShowThat Store</string>
+    <key>products</key>
+    <array>
+        <dict>
+            <key>id</key>
+            <string>com.showthat.subscription.pro</string>
+            <key>type</key>
+            <string>autoRenewable</string>
+            <key>displayName</key>
+            <string>Pro Subscription</string>
+            <key>description</key>
+            <string>50 QR Codes, 10 Dynamic QRs, 90-Day Analytics, Custom Branding, Priority Support</string>
+            <key>price</key>
+            <real>9.99</real>
+            <key>subscriptionGroupID</key>
+            <string>21506958</string>
+            <key>subscriptionPeriod</key>
+            <string>P1M</string>
+        </dict>
+        <dict>
+            <key>id</key>
+            <string>com.showthat.subscription.business</string>
+            <key>type</key>
+            <string>autoRenewable</string>
+            <key>displayName</key>
+            <string>Business Subscription</string>
+            <key>description</key>
+            <string>500 QR Codes, 100 Dynamic QRs, 1-Year Analytics, Team Collaboration, API Access, Bulk Operations</string>
+            <key>price</key>
+            <real>29.99</real>
+            <key>subscriptionGroupID</key>
+            <string>21506958</string>
+            <key>subscriptionPeriod</key>
+            <string>P1M</string>
+        </dict>
+        <dict>
+            <key>id</key>
+            <string>com.showthat.subscription.enterprise</string>
+            <key>type</key>
+            <string>autoRenewable</string>
+            <key>displayName</key>
+            <string>Enterprise Subscription</string>
+            <key>description</key>
+            <string>Unlimited QRs, Unlimited Dynamic QRs, Forever Analytics, White Label, Dedicated Support, Custom Features</string>
+            <key>price</key>
+            <real>99.99</real>
+            <key>subscriptionGroupID</key>
+            <string>21506958</string>
+            <key>subscriptionPeriod</key>
+            <string>P1M</string>
+        </dict>
+    </array>
+    <key>subscriptionGroups</key>
+    <array>
+        <dict>
+            <key>id</key>
+            <string>21506958</string>
+            <key>name</key>
+            <string>ShowThat Premium</string>
+        </dict>
+    </array>
+    <key>version</key>
+    <string>1.0</string>
+</dict>
+</plist>

@@ -9,6 +9,7 @@ import Foundation
 import StoreKit
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseAnalytics
 
 class PaymentManager: NSObject, ObservableObject {
     static let shared = PaymentManager()
@@ -46,6 +47,7 @@ class PaymentManager: NSObject, ObservableObject {
     
     private var productsLoaded = false
     private var updates: Task<Void, Never>? = nil
+    private let db = Firestore.firestore()
     
     override init() {
         super.init()
@@ -75,9 +77,18 @@ class PaymentManager: NSObject, ObservableObject {
             productsLoaded = true
             
             print("Loaded \(products.count) products")
+            
+            // Log to Firebase Analytics
+            Analytics.logEvent("products_loaded", parameters: [
+                "product_count": products.count
+            ])
         } catch {
             print("Failed to load products: \(error)")
             purchaseError = error
+            
+            Analytics.logEvent("products_load_failed", parameters: [
+                "error": error.localizedDescription
+            ])
         }
         
         isLoading = false
@@ -87,6 +98,12 @@ class PaymentManager: NSObject, ObservableObject {
     func purchase(_ product: Product) async throws {
         isLoading = true
         defer { isLoading = false }
+        
+        // Log purchase attempt
+        Analytics.logEvent("purchase_initiated", parameters: [
+            "product_id": product.id,
+            "product_price": product.price
+        ])
         
         let result = try await product.purchase()
         
@@ -104,12 +121,29 @@ class PaymentManager: NSObject, ObservableObject {
             // Update local state
             await updatePurchasedProducts()
             
+            // Log successful purchase
+            Analytics.logEvent(AnalyticsEventPurchase, parameters: [
+                AnalyticsParameterCurrency: "USD",
+                AnalyticsParameterValue: product.price,
+                AnalyticsParameterItemID: product.id
+            ])
+            
         case .userCancelled:
             print("User cancelled purchase")
+            
+            Analytics.logEvent("purchase_cancelled", parameters: [
+                "product_id": product.id
+            ])
+            
             throw PurchaseError.userCancelled
             
         case .pending:
             print("Purchase pending")
+            
+            Analytics.logEvent("purchase_pending", parameters: [
+                "product_id": product.id
+            ])
+            
             throw PurchaseError.pending
             
         @unknown default:
@@ -122,12 +156,19 @@ class PaymentManager: NSObject, ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
+        Analytics.logEvent("restore_initiated", parameters: nil)
+        
         try await AppStore.sync()
         
         await updatePurchasedProducts()
         
         if purchasedSubscriptions.isEmpty {
+            Analytics.logEvent("restore_failed_no_purchases", parameters: nil)
             throw PurchaseError.noPurchasesToRestore
+        } else {
+            Analytics.logEvent("restore_successful", parameters: [
+                "subscription_count": purchasedSubscriptions.count
+            ])
         }
     }
     
@@ -153,6 +194,9 @@ class PaymentManager: NSObject, ObservableObject {
     func checkVerifier<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified(_, let error):
+            Analytics.logEvent("verification_failed", parameters: [
+                "error": error.localizedDescription
+            ])
             throw error
         case .verified(let safe):
             return safe
@@ -163,32 +207,35 @@ class PaymentManager: NSObject, ObservableObject {
     private func updatePurchasedProducts() async {
         var purchased: [Product] = []
         
-        // check current entitlements
+        // Check current entitlements
         for await result in Transaction.currentEntitlements {
             do {
                 let transaction = try checkVerifier(result)
                 
-                if let product = products.first(where: { $0.id == transaction.productID }) {
-                    purchased.append(product)
+                // Check if transaction is active
+                if transaction.revocationDate == nil {
+                    if let product = products.first(where: { $0.id == transaction.productID }) {
+                        purchased.append(product)
+                    }
                 }
             } catch {
-                print("[-] Failed to verify transaction: \(error)")
+                print("[PaymentManager] Failed to verify transaction: \(error)")
             }
         }
         
         self.purchasedSubscriptions = purchased
         
-        // update subscription group status
-        let statuses = try? await Product.SubscriptionInfo.status(for: "com.showthat.subscriptions")
-        self.subscriptionGroupStatus = statuses?.first?.state
+        // Update subscription group status
+        if let groupID = purchased.first?.subscription?.subscriptionGroupID {
+            let statuses = try? await Product.SubscriptionInfo.status(for: groupID)
+            self.subscriptionGroupStatus = statuses?.first?.state
+        }
     }
     
     private func updateSubscriptionStatus(for transaction: StoreKit.Transaction) async {
         guard let userId = Auth.auth().currentUser?.uid,
               let productId = ProductID(rawValue: transaction.productID) else { return }
         
-        let db = Firestore.firestore()
-        // get subscription end date
         let endDate: Date?
         if let expirationDate = transaction.expirationDate {
             endDate = expirationDate
@@ -196,7 +243,6 @@ class PaymentManager: NSObject, ObservableObject {
             endDate = Calendar.current.date(byAdding: .year, value: 100, to: Date())
         }
         
-        // subscription object
         let subscription = UserSubscription(
             tier: productId.tier,
             startDate: transaction.purchaseDate,
@@ -206,21 +252,57 @@ class PaymentManager: NSObject, ObservableObject {
             customerId: nil
         )
         
-        // update firestore
         do {
-            let data: [String: Any] = [
-                "subscription": try Firestore.Encoder().encode(subscription),
-                "updatedAt": FieldValue.serverTimestamp()
-            ]
+            // First check if user document exists
+            let userDoc = try await db.collection("users").document(userId).getDocument()
             
-            _ = db.collection("users").document(userId).updateData(data)
+            if userDoc.exists {
+                // Update existing document
+                let data: [String: Any] = [
+                    "subscription": try Firestore.Encoder().encode(subscription),
+                    "updatedAt": FieldValue.serverTimestamp()
+                ]
+                
+                _ = db.collection("users").document(userId).updateData(data)
+            } else {
+                // Create new user document with subscription
+                let newUser = UserProfile(
+                    email: Auth.auth().currentUser?.email ?? "",
+                    displayName: Auth.auth().currentUser?.displayName,
+                    subscription: subscription
+                )
+                
+                _ = db.collection("users").document(userId).setData(from: newUser)
+            }
             
-            print("[+] Updated subscription status for user: \(userId)")
+            print("[PaymentManager] Updated subscription status for user: \(userId)")
+            
+            // Update Analytics
+            Analytics.setUserProperty(productId.tier.rawValue, forName: "subscription_tier")
+            Analytics.logEvent("subscription_updated", parameters: [
+                "tier": productId.tier.rawValue,
+                "transaction_id": String(transaction.id)
+            ])
+            
+            // Post notification for other parts of the app
+            await MainActor.run {
+                NotificationCenter.default.post(
+                    name: .subscriptionStatusChanged,
+                    object: nil,
+                    userInfo: ["tier": productId.tier.rawValue]
+                )
+            }
+            
         } catch {
-            print("[-] Failed to update subscription in Firestore: \(error)")
+            print("[PaymentManager] Failed to update subscription in Firestore: \(error)")
+            
+            Analytics.logEvent("firestore_update_failed", parameters: [
+                "error": error.localizedDescription,
+                "user_id": userId
+            ])
         }
     }
-    
+
     // MARK: - Helper Methods
     func product(for tier: UserSubscription.Tier) -> Product? {
         guard let productID = ProductID.from(tier: tier) else { return nil }
@@ -258,5 +340,16 @@ class PaymentManager: NSObject, ObservableObject {
     // MARK: - Price formatting
     func formattedPrice(for product: Product) -> String {
         product.displayPrice
+    }
+    
+    @MainActor
+    func refreshSubscriptionStatus() async {
+        await updatePurchasedProducts()
+        
+        // Notify observers that subscription status may have changed
+        NotificationCenter.default.post(
+            name: .subscriptionStatusChanged,
+            object: nil
+        )
     }
 }
