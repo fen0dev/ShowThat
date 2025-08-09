@@ -53,7 +53,7 @@ struct QRCodeCard: View {
                 .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
         )
         .onAppear {
-            generateQRImage()
+            Task { await generateQRImage() }
         }
         .sheet(isPresented: $showingDetailSheet) {
             QRCodeDetailView(qrCode: qrCode, qrManager: qrManager)
@@ -120,13 +120,13 @@ struct QRCodeCard: View {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
                 
-                Button(action: { }) {
+                Button(action: { duplicateQRCode() }) {
                     Label("Duplicate", systemImage: "doc.on.doc")
                 }
                 
                 Divider()
                 
-                Button(role: .destructive, action: { }) {
+                Button(role: .destructive, action: { deleteQRCode() }) {
                     Label("Delete", systemImage: "trash")
                 }
             } label: {
@@ -199,17 +199,27 @@ struct QRCodeCard: View {
     
     // MARK: - Helper Methods
     
-    private func generateQRImage() {
+    @MainActor
+    private func generateQRImage() async {
         // Generate based on style
         switch qrCode.style.design {
         case .minimal:
             qrImage = generator.generateBasicQR(from: qrCode.content.rawValue)
         case .branded:
+            var logoImage: UIImage? = nil
+            if let urlString = qrCode.style.logoURL, let url = URL(string: urlString) {
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: url)
+                    logoImage = UIImage(data: data)
+                } catch {
+                    logoImage = nil
+                }
+            }
             qrImage = generator.generateCustomQR(
                 from: qrCode.content.rawValue,
                 foreground: UIColor(qrCode.style.foregroundColor.color),
                 background: UIColor(qrCode.style.backgroundColor.color),
-                logo: nil // TODO: Load from logoURL if present
+                logo: logoImage
             )
         case .gradient:
             qrImage = generator.generateGradientQR(from: qrCode.content.rawValue)

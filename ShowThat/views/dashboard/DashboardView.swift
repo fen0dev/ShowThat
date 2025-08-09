@@ -84,7 +84,6 @@ struct DashboardView: View {
             })
             .sheet(isPresented: $showingProfileSheet, content: {
                 ProfileSettingsView()
-                    .environmentObject(QRCodeManager())
             })
             .overlay(alignment: .bottomTrailing) {
                 if !filteredQRCodes.isEmpty {

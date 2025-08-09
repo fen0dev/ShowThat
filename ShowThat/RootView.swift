@@ -27,6 +27,7 @@ struct RootView: View {
         }
         .animation(.spring(), value: authState.isAuthenticated)
         .withAlerts()
+        .subscriptionExpiredAlert()
     }
 }
 
