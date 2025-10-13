@@ -62,7 +62,7 @@ class AlertManager: ObservableObject {
     func showInfo(
         title: String,
         message: String,
-        icon: String = "info.circle.fill",
+        icon: String,
         action: (() -> Void)? = nil
     ) {
         alertConfig = AlertConfig(

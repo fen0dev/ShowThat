@@ -235,8 +235,10 @@ struct QRCodeCard: View {
             qrImage = generator.generateGradientQR(from: qrCode.content.rawValue)
         case .glass:
             qrImage = generator.generateGlassQR(from: qrCode.content.rawValue)
-        default:
-            qrImage = generator.generateBasicQR(from: qrCode.content.rawValue)
+        case .dots:
+            qrImage = generator.generateDotsQR(from: qrCode.content.rawValue)
+        case .rounded:
+            qrImage = generator.generateRoundedQR(from: qrCode.content.rawValue)
         }
     }
     
@@ -289,6 +291,14 @@ struct QRCodeCard: View {
     }
     
     private func downloadQRCode() {
+        guard qrManager.currentSubscriptionTier.canDownloadHiRes else {
+            AlertManager.shared.showError(
+                title: "Upgrade required",
+                message: "Upgrade your plan and start downloading in HD"
+            )
+            return
+        }
+        
         guard let qrImage = qrImage else { return }
         let saver = PhotoSaver { error in
             if let error = error {

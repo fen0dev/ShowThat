@@ -58,34 +58,50 @@ struct AnalyticsView: View {
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // QR code selector
-                    if qrManager.qrCodes.count > 1 {
-                        qrCodeSelectorView
-                            .padding(.horizontal)
-                    }
-                    
-                    if isLoading {
-                        LoadingView(message: "Loading Analytics")
-                    } else if let qrCode = selectedQRCode, let data = analyticsData {
+                if !qrManager.currentSubscriptionTier.canViewAdvancedAnalytics {
+                    // free: simplified analytics
+                    if let qr = qrManager.qrCodes.first {
                         ScrollView {
-                            VStack(spacing: 20) {
-                                headerView(qrCode: qrCode)
-                                realTimeStatsView
-                                performanceInsightsView(data.performanceInsights)
-                                chartsSection(data)
-                                geographicDistributionView(data)
-                                deviceAnalyticsView(data)
-                                conversionEventsView(data.conversionEvents)
+                            VStack(spacing: 10) {
+                                SimpleAnalyticsView(qrCode: qr)
                                 
-                                if !predictions.isEmpty {
-                                    predictionsView
-                                }
+                                //upgradeBanner
                             }
                             .padding()
                         }
                     } else {
                         emptyStateView
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        // QR code selector
+                        if qrManager.qrCodes.count > 1 {
+                            qrCodeSelectorView
+                                .padding(.horizontal)
+                        }
+                        
+                        if isLoading {
+                            LoadingView(message: "Loading Analytics")
+                        } else if let qrCode = selectedQRCode, let data = analyticsData {
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    headerView(qrCode: qrCode)
+                                    realTimeStatsView
+                                    performanceInsightsView(data.performanceInsights)
+                                    chartsSection(data)
+                                    geographicDistributionView(data)
+                                    deviceAnalyticsView(data)
+                                    conversionEventsView(data.conversionEvents)
+                                    
+                                    if !predictions.isEmpty {
+                                        predictionsView
+                                    }
+                                }
+                                .padding()
+                            }
+                        } else {
+                            emptyStateView
+                        }
                     }
                 }
             }
@@ -99,6 +115,21 @@ struct AnalyticsView: View {
         }
     }
     
+    private var upgradeBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "crown.fill")
+                .foregroundStyle(DesignTokens.Colors.warning)
+            Text("Upgrade to Pro to get advanced reports, predictions, segmentations and more")
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.secondary)
+            Spacer()
+        }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.yellow.opacity(0.1))
+        }
+    }
     
     private func headerView(qrCode: QRCodeModel) -> some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -367,7 +398,7 @@ struct AnalyticsView: View {
     private func geographicDistributionView(_ data: QRAnalyticsData) -> some View {
         ModernCard(style: .elevated) {
             VStack(alignment: .leading, spacing: 15) {
-                Text("GRographic Distributed")
+                Text("Geographic Distribution")
                     .font(DesignTokens.Typography.headline)
                 
                 if data.scansByCountry.isEmpty {

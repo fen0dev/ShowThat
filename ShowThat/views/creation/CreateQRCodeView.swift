@@ -109,6 +109,7 @@ struct CreateQRCodeView: View {
                         logoImage: $logoImage,
                         showingImagePicker: $showingImagePicker
                     )
+                    .environmentObject(qrManager)
                     .padding(.horizontal)
                     
                     // Preview Button

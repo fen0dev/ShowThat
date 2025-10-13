@@ -18,4 +18,5 @@ struct UserProfile: Codable {
     var dynamicQRsCreated: Int = 0
     var totalScans: Int = 0
     var isActive: Bool = true
+    var teamId: String?
 }

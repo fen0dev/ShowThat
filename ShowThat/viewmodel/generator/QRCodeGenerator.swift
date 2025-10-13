@@ -70,26 +70,35 @@ class QRCodeGenerator {
         return finalImage
     }
     
-    func generateGradientQR(from string: String) -> UIImage? {
+    func generateGradientQR(from string: String, foregroundColor: UIColor = .black, background: UIColor = .white) -> UIImage? {
         guard let basicQR = generateBasicQR(from: string) else { return nil }
         
         let size = CGSize(width: 300, height: 300)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
         
         // Create gradient
-        let colors = [UIColor.systemPurple.cgColor, UIColor.systemBlue.cgColor]
-        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                colors: colors as CFArray,
-                                locations: nil)!
+        let gradientColors: [CGColor] = [UIColor.purple.cgColor, UIColor.systemTeal.cgColor]
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let locations: [CGFloat] = [0.0, 1.0]
+        guard let gradient = CGGradient(colorsSpace: colorSpace, colors: gradientColors as CFArray, locations: locations) else {
+            UIGraphicsEndImageContext()
+            return nil
+        }
         
-        let context = UIGraphicsGetCurrentContext()!
         context.drawLinearGradient(gradient,
-                                 start: CGPoint.zero,
-                                 end: CGPoint(x: size.width, y: size.height),
-                                 options: [])
+                                   start: CGPoint(x: 0, y: 0),
+                                   end: CGPoint(x: size.width, y: size.height),
+                                   options: [])
         
         // Apply QR as mask
-        basicQR.draw(in: CGRect(origin: .zero, size: size), blendMode: .destinationIn, alpha: 1.0)
+        if let cgImage = basicQR.cgImage {
+            context.clip(to: CGRect(origin: .zero, size: size), mask: cgImage)
+            context.drawLinearGradient(gradient,
+                                       start: CGPoint(x: size.width / 2, y: 0),
+                                       end: CGPoint(x: size.width / 2, y: size.height),
+                                       options: [])
+        }
         
         let finalImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
@@ -97,18 +106,112 @@ class QRCodeGenerator {
         return finalImage
     }
     
-    func generateGlassQR(from string: String) -> UIImage? {
+    func generateGlassQR(from string: String, foreground: UIColor = .black, background: UIColor = .white) -> UIImage? {
         guard let basicQR = generateBasicQR(from: string) else { return nil }
         
         let size = CGSize(width: 300, height: 300)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
         
-        // Semi-transparent background
-        UIColor.white.withAlphaComponent(0.9).setFill()
-        UIRectFill(CGRect(origin: .zero, size: size))
+        let glassColors = [UIColor.white.withAlphaComponent(0.8).cgColor, UIColor.clear.cgColor]
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let locations: [CGFloat] = [0.0, 1.0]
+        let glassGradient = CGGradient(colorsSpace: colorSpace, colors: glassColors as CFArray, locations: locations)!
         
-        // Draw QR with transparency
-        basicQR.draw(in: CGRect(origin: .zero, size: size), blendMode: .normal, alpha: 0.8)
+        context.drawLinearGradient(glassGradient,
+                                   start: CGPoint(x: 0, y: 0),
+                                   end: CGPoint(x: size.width, y: size.height),
+                                   options: [])
+        
+        // simulated blur with semi-transoarent overlay
+        context.setBlendMode(.multiply)
+        UIColor.white.withAlphaComponent(0.5).setFill()
+        context.fill(CGRect(origin: .zero, size: size))
+        
+        if let cgImage = basicQR.cgImage {
+            context.setBlendMode(.normal)
+            context.draw(cgImage, in: CGRect(origin: CGPoint(x: 50, y: 50), size: CGSize(width: 200, height: 200)))
+        }
+        
+        let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return finalImage
+    }
+    
+    func generateDotsQR(from string: String, foreground: UIColor = .black, background: UIColor = .white) -> UIImage? {
+        guard let basicQR = generateBasicQR(from: string) else { return nil }
+        
+        let size = CGSize(width: 300, height: 300)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        
+        // solid background
+        background.setFill()
+        context.fill(CGRect(origin: .zero, size: size))
+        
+        // design like circles
+        if let cgImage = basicQR.cgImage,
+           let pixelData = cgImage.dataProvider?.data,
+           let data = CFDataGetBytePtr(pixelData) {
+            let bytesPerPixel = 4
+            let width = Int(cgImage.width)
+            let height = Int(cgImage.height)
+            let scale = size.width / CGFloat(width)
+            
+            for y in 0..<height {
+                for x in 0..<width {
+                    let pixelIndex = (y * width + 1) * bytesPerPixel
+                    let alpha = data[pixelIndex + 3]
+                    if alpha > 128 {
+                        let center = CGPoint(x: CGFloat(x) * scale + scale / 2, y: CGFloat(y) * scale + scale / 2)
+                        let radius = scale / 2 * 0.8
+                        let circlePath = UIBezierPath(arcCenter: center, radius: radius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+                        foreground.setFill()
+                        circlePath.fill()
+                    }
+                }
+            }
+        }
+        
+        let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return finalImage
+    }
+    
+    func generateRoundedQR(from string: String, foreground: UIColor = .black, background: UIColor = .white, cornerRadius: CFloat = 5.0) -> UIImage? {
+        guard let basicQR = generateBasicQR(from: string) else { return nil }
+        
+        let size = CGSize(width: 300, height: 300)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        
+        background.setFill()
+        context.fill(CGRect(origin: .zero, size: size))
+        
+        if let cgImage = basicQR.cgImage,
+           let pixelData = cgImage.dataProvider?.data,
+           let data = CFDataGetBytePtr(pixelData) {
+            let bytesPerPixel = 4
+            let width = Int(cgImage.width)
+            let height = Int(cgImage.height)
+            let scale = size.width / CGFloat(width)
+            let moduleSize = scale
+            
+            for y in 0..<height {
+                for x in 0..<width {
+                    let pixelIndex = (y * width + x)
+                    let alpha = data[pixelIndex + 3]
+                    if alpha > 128 {
+                        let rect = CGRect(x: CGFloat(x) * moduleSize, y: CGFloat(y) * moduleSize, width: moduleSize, height: moduleSize)
+                        let roundedPath = UIBezierPath(roundedRect: rect, cornerRadius: CGFloat(cornerRadius))
+                        foreground.setFill()
+                        roundedPath.fill()
+                    }
+                }
+            }
+        }
         
         let finalImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()

@@ -81,3 +81,48 @@ struct UserSubscription: Codable {
     var subscriptionId: String? // App Store subscription ID
     var customerId: String? // Stripe customer ID if using web payments
 }
+
+// MARK: - Tier feature Gates
+extension UserSubscription.Tier {
+    var isProOrAbove: Bool { self == .pro || self == .business || self == .enterprise }
+    var isBusinessOrAbove: Bool { self == .business || self == .enterprise }
+    var isEnterprise: Bool { self == .enterprise }
+    
+    var allowedDesigns: [QRStyle.QRDesignStyle] {
+        switch self {
+        case .free:
+            return [.minimal]
+        case .pro:
+            return [.minimal, .gradient, .rounded]
+        case .business:
+            return [.minimal, .branded, .gradient, .rounded]
+        case .enterprise:
+            return QRStyle.QRDesignStyle.allCases
+        }
+    }
+    
+    var canUploadLogo: Bool { isProOrAbove }
+    var canViewAdvancedAnalytics: Bool { isProOrAbove }
+    var canUseBulkOperation: Bool { isBusinessOrAbove }
+    var canManageTeam: Bool { isBusinessOrAbove }
+    var canUseAPI: Bool { isBusinessOrAbove }
+    var canUseWebhooks: Bool { isBusinessOrAbove }
+    var whiteLabel: Bool { isEnterprise }
+    var canDownloadHiRes: Bool { isProOrAbove }
+    var canExportVector: Bool { isEnterprise }
+}
+
+extension UserSubscription.Tier {
+    var allowedTypes: [QRCodeType] {
+        switch self {
+        case .free:
+            return [.url, .wifi, .sms]
+        case .pro:
+            return [.url, .wifi, .email, .sms]
+        case .business:
+            return [.url, .vCard, .wifi, .email, .sms, .whatsapp, .linkedIn]
+        case .enterprise:
+            return QRCodeType.allCases
+        }
+    }
+}

@@ -12,6 +12,7 @@ struct StyleCustomizationSection: View {
     @Binding var style: QRStyle
     @Binding var logoImage: UIImage?
     @Binding var showingImagePicker: Bool
+    @EnvironmentObject var qrCodeManager: QRCodeManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -22,11 +23,34 @@ struct StyleCustomizationSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(QRStyle.QRDesignStyle.allCases, id: \.self) { design in
-                        DesignStyleCard(
-                            design: design,
-                            isSelected: style.design == design,
-                            action: { style.design = design }
-                        )
+                        let allowed = qrCodeManager.currentSubscriptionTier.allowedDesigns.contains(design)
+                        
+                        ZStack {
+                            DesignStyleCard(
+                                design: design,
+                                isSelected: style.design == design,
+                                action: {
+                                    if allowed {
+                                        style.design = design
+                                    } else {
+                                        AlertManager.shared.showInfo(
+                                            title: "Upgrade Required",
+                                            message: "This style is available from \(qrCodeManager.currentSubscriptionTier == .free ? "Pro" : "Business") upwards.",
+                                            icon: "lock.fill"
+                                        )
+                                    }
+                                }
+                            )
+                            
+                            if !allowed {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.black.opacity(0.35))
+                                    .overlay(
+                                        Image(systemName: "lock.fill")
+                                            .foregroundColor(.white)
+                                    )
+                            }
+                        }
                     }
                 }
             }
@@ -52,29 +76,46 @@ struct StyleCustomizationSection: View {
                         icon: "square.fill.on.square.fill"
                     )
                     
-                    // Logo Upload
-                    Button(action: { showingImagePicker = true }) {
-                        HStack {
-                            Image(systemName: logoImage == nil ? "photo.badge.plus" : "photo.fill.on.rectangle.fill")
-                                .font(.title3)
-                            
-                            Text(logoImage == nil ? "Add Logo" : "Logo Added")
-                                .fontWeight(.medium)
-                            
+                    if qrCodeManager.currentSubscriptionTier.canUploadLogo {
+                        // Logo Upload
+                        Button(action: { showingImagePicker = true }) {
+                            HStack {
+                                Image(systemName: logoImage == nil ? "photo.badge.plus" : "photo.fill.on.rectangle.fill")
+                                    .font(.title3)
+                                
+                                Text(logoImage == nil ? "Add Logo" : "Logo Added")
+                                    .fontWeight(.medium)
+                                
+                                Spacer()
+                                
+                                if logoImage != nil {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                }
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.gray.opacity(0.1))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill").foregroundColor(.orange)
+                            Text("Uploading the logo requires either a Pro or Business subscription")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                             Spacer()
-                            
-                            if logoImage != nil {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
+                            Button("Upgrade") {
+                                AlertManager.shared.showInfo(
+                                    title: "Pro Feature",
+                                    message: "Unlock personalized branding with Pro.",
+                                    icon: "crown.fill"
+                                )
                             }
                         }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.gray.opacity(0.1))
-                        )
                     }
-                    .buttonStyle(.plain)
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -84,4 +125,5 @@ struct StyleCustomizationSection: View {
 
 #Preview {
     StyleCustomizationSection(style: .constant(QRStyle()), logoImage: .constant(.actions), showingImagePicker: .constant(false))
+        .environmentObject(QRCodeManager())
 }
