@@ -7,12 +7,14 @@
 
 import SwiftUI
 
+@available(iOS 17.0, *)
 struct QRCodeCard: View {
     let qrCode: QRCodeModel
     let qrManager: QRCodeManager
     
     @State private var showingDetailSheet = false
     @State private var showingShareSheet = false
+    @State private var photoSaver: PhotoSaver?
     @State private var qrImage: UIImage?
     @State private var isExpanded = false
     
@@ -208,11 +210,19 @@ struct QRCodeCard: View {
         case .branded:
             var logoImage: UIImage? = nil
             if let urlString = qrCode.style.logoURL, let url = URL(string: urlString) {
-                do {
-                    let (data, _) = try await URLSession.shared.data(from: url)
-                    logoImage = UIImage(data: data)
-                } catch {
-                    logoImage = nil
+                let nsurl = url as NSURL
+                if let cached = await ImageCache.shared.image(for: nsurl as URL) {
+                    logoImage = cached
+                } else {
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: url)
+                        if let img = UIImage(data: data) {
+                            ImageCache.shared.store(img, for: nsurl as URL)
+                            logoImage = img
+                        }
+                    } catch {
+                        logoImage = nil
+                    }
                 }
             }
             qrImage = generator.generateCustomQR(
@@ -280,14 +290,19 @@ struct QRCodeCard: View {
     
     private func downloadQRCode() {
         guard let qrImage = qrImage else { return }
-        
-        UIImageWriteToSavedPhotosAlbum(qrImage, nil, nil, nil)
-        
-        AlertManager.shared.showSuccess(
-            title: "Saved!",
-            message: "QR code has been saved to your photo library",
-            icon: "square.and.arrow.down.fill"
-        )
+        let saver = PhotoSaver { error in
+            if let error = error {
+                AlertManager.shared.showErrorToast("Failed to save: \(error.localizedDescription)")
+            } else {
+                AlertManager.shared.showSuccess(
+                    title: "Saved!",
+                    message: "QR code has been saved to your photo library",
+                    icon: "square.and.arrow.down.fill"
+                )
+            }
+        }
+        self.photoSaver = saver
+        UIImageWriteToSavedPhotosAlbum(qrImage, saver, #selector(PhotoSaver.didFinishSaving(_:didFinishSavingWithError:contextInfo:)), nil)
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -298,6 +313,20 @@ struct QRCodeCard: View {
     }
 }
 
+final class PhotoSaver: NSObject {
+    private let completion: (Error?) -> Void
+    init(completion: @escaping (Error?) -> Void) {
+        self.completion = completion
+    }
+    @objc func didFinishSaving(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeMutableRawPointer?) {
+        completion(error)
+    }
+}
+
 #Preview {
-    QRCodeCard(qrCode: QRCodeModel(userId: UUID().uuidString, name: "Giuseppe", type: .vCard, content: .vCard(VCardData(fullName: "TechnoForged Digital")), style: QRStyle()), qrManager: QRCodeManager())
+    if #available(iOS 17.0, *) {
+        QRCodeCard(qrCode: QRCodeModel(userId: UUID().uuidString, name: "Giuseppe", type: .vCard, content: .vCard(VCardData(fullName: "TechnoForged Digital")), style: QRStyle()), qrManager: QRCodeManager())
+    } else {
+        // Fallback on earlier versions
+    }
 }

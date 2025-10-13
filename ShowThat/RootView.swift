@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(iOS 17.0, *)
 struct RootView: View {
     @EnvironmentObject var authState: AuthState
     var body: some View {
@@ -32,6 +33,10 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
-        .environmentObject(AuthState())
+    if #available(iOS 17.0, *) {
+        RootView()
+            .environmentObject(AuthState())
+    } else {
+        // Fallback on earlier versions
+    }
 }

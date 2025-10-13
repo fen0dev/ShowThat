@@ -70,7 +70,7 @@ struct UpgradeView: View {
                         
                         Button("Try Again") {
                             Task {
-                                await paymentManager.loadProducts()
+                                await paymentManager.loadProducts(force: true)
                             }
                         }
                         .buttonStyle(PrimaryButtonStyle())
@@ -127,7 +127,7 @@ struct UpgradeView: View {
         .task {
             // Load products if not already loaded
             if paymentManager.products.isEmpty {
-                await paymentManager.loadProducts()
+                await paymentManager.loadProducts(force: true)
             }
             
             // Pre-select current tier or Pro

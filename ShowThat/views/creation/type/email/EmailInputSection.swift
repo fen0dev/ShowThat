@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(iOS 16.0, *)
 struct EmailInputSection: View {
     @Binding var emailData: EmailData
     
@@ -37,5 +38,9 @@ struct EmailInputSection: View {
 }
 
 #Preview {
-    EmailInputSection(emailData: .constant(EmailData(email: "this@example.com")))
+    if #available(iOS 16.0, *) {
+        EmailInputSection(emailData: .constant(EmailData(email: "this@example.com")))
+    } else {
+        // Fallback on earlier versions
+    }
 }

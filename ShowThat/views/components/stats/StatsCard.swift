@@ -10,32 +10,29 @@ import SwiftUI
 struct StatsCard: View {
     let title: String
     let value: String
-    let icon: String
+    let subtitle: String
     let color: Color
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(color)
-                
-                Spacer()
-            }
+            Text(title)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.secondary)
             
             Text(value)
-                .font(.title)
-                .bold()
+                .font(DesignTokens.Typography.headline)
+                .foregroundStyle(color)
             
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(subtitle)
+                .font(DesignTokens.Typography.caption2)
+                .foregroundStyle(DesignTokens.Colors.textTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 15))
+        .background(color.opacity(0.1))
+        .cornerRadius(DesignTokens.CornerRadius.md)
     }
 }
 
 #Preview {
-    StatsCard(title: "Test", value: "Test", icon: "envelope", color: .pink)
+    StatsCard(title: "Test", value: "Test", subtitle: "testing", color: .pink)
 }

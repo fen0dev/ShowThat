@@ -9,7 +9,11 @@ import Foundation
 import SwiftUI
 import FirebaseFirestore
 
-struct QRCodeModel: Identifiable, Codable {
+struct QRCodeModel: Identifiable, Codable, Equatable {
+    static func == (lhs: QRCodeModel, rhs: QRCodeModel) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
     @DocumentID var id: String?
     let userId: String
     var name: String
@@ -23,11 +27,12 @@ struct QRCodeModel: Identifiable, Codable {
     var scanCount: Int = 0
     var isActive: Bool = true
     var tags: [String] = []
+    @ServerTimestamp var lastScanned: Date?
     
     // Computed property for Firestore collection reference
     var dynamicURL: String? {
         guard isDynamic, let shortCode = shortCode else { return nil }
-        return "https://showt.hat/\(shortCode)" // Your Firebase hosting domain
+        return "https://showthat-23935.web.app/qr/\(shortCode)"
     }
     
     // Initialize for new QR codes

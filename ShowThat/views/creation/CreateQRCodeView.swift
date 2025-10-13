@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 
+@available(iOS 16.0, *)
 struct CreateQRCodeView: View {
     let qrManager: QRCodeManager
     
@@ -41,7 +42,8 @@ struct CreateQRCodeView: View {
     var isContentValid: Bool {
         switch selectedType {
         case .url:
-            return !urlString.isEmpty && URL(string: urlString) != nil
+            if let u = URL(string: urlString), let _ = u.scheme, let _ = u.host { return true }
+            return false
         case .vCard:
             return !vCardData.fullName.isEmpty
         case .wifi:
@@ -201,15 +203,12 @@ struct CreateQRCodeView: View {
                     logoImage: logoImage
                 )
                 
-                AlertManager.shared.showSuccess(
-                    title: "QR Code Created!",
-                    message: isDynamic ?
-                        "Your dynamic QR code is ready. You can update its destination anytime!" :
-                        "Your QR code has been created successfully.",
-                    icon: "qrcode"
-                ) {
+                await MainActor.run {
+                    isLoading = false
                     dismiss()
                 }
+                
+                AlertManager.shared.showSuccessToast("QR Code Created!")
                 
             } catch QRError.subscriptionLimitReached {
                 isLoading = false
@@ -280,5 +279,9 @@ struct CreateQRCodeView: View {
 }
 
 #Preview {
-    CreateQRCodeView(qrManager: QRCodeManager())
+    if #available(iOS 16.0, *) {
+        CreateQRCodeView(qrManager: QRCodeManager())
+    } else {
+        // Fallback on earlier versions
+    }
 }

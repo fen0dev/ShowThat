@@ -8,6 +8,7 @@
 import SwiftUI
 import StoreKit
 
+@available(iOS 16.0, *)
 struct SubscriptionStatusView: View {
     @EnvironmentObject var qrManager: QRCodeManager
     @StateObject private var paymentManager = PaymentManager.shared
@@ -190,8 +191,12 @@ struct SubscriptionStatusView: View {
 
 #Preview {
     VStack {
-        SubscriptionStatusView()
-            .environmentObject(QRCodeManager())
+        if #available(iOS 16.0, *) {
+            SubscriptionStatusView()
+                .environmentObject(QRCodeManager())
+        } else {
+            // Fallback on earlier versions
+        }
         
         Spacer()
     }

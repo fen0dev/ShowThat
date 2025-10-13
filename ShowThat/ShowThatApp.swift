@@ -10,18 +10,26 @@ import FirebaseCore
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        FirebaseApp.configure()
-        
+        AppConfiguration.shared.configureFirebase()
+        _ = EncryptionService.shared
+        Logger.shared.logInfo("App launched successfully!")
         return true
+    }
+    
+    func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
+        Logger.shared.logWarning("Memory warning received")
+        ErrorManager.shared.handle(SystemError.memoryWarning, context: .general)
     }
 }
 
+@available(iOS 17.0, *)
 @main
 struct ShowThatApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authState = AuthState()
     @StateObject private var qrManager = QRCodeManager()
     @StateObject private var paymentManager = PaymentManager.shared
+    private var errorManager = ErrorManager.shared
     @State private var showingLaunchScreen = true
     
     init() {
@@ -46,8 +54,10 @@ struct ShowThatApp: App {
                         .environmentObject(qrManager)
                         .environmentObject(paymentManager)
                         .preferredColorScheme(.light)
+                        .withErrorHandling()
                 }
             }
+            .environmentObject(errorManager)
         }
     }
     

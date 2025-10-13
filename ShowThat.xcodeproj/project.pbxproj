@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D02D0E372E91823E00361686 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D02D0E362E91823E00361686 /* StoreKit.framework */; };
 		D056FC082E0A9DC400F4B881 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D056FC072E0A9DC300F4B881 /* GoogleService-Info.plist */; };
 		D056FC0B2E0A9E4300F4B881 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC0A2E0A9E4300F4B881 /* FirebaseAI */; };
 		D056FC0D2E0A9E4300F4B881 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC0C2E0A9E4300F4B881 /* FirebaseAnalytics */; };
@@ -22,13 +23,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D02D0E362E91823E00361686 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D056FBDD2E040C5200F4B881 /* ShowThat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShowThat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D056FC072E0A9DC300F4B881 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D0657D9A2E9531FF003B514E /* Exceptions for "ShowThat" folder in "ShowThat" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D056FBDC2E040C5200F4B881 /* ShowThat */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D056FBDF2E040C5200F4B881 /* ShowThat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D0657D9A2E9531FF003B514E /* Exceptions for "ShowThat" folder in "ShowThat" target */,
+			);
 			path = ShowThat;
 			sourceTree = "<group>";
 		};
@@ -42,6 +57,7 @@
 				D056FC152E0A9E4300F4B881 /* FirebaseDatabase in Frameworks */,
 				D056FC192E0A9E4300F4B881 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				D056FC1D2E0A9E4300F4B881 /* FirebaseMessaging in Frameworks */,
+				D02D0E372E91823E00361686 /* StoreKit.framework in Frameworks */,
 				D056FC1B2E0A9E4300F4B881 /* FirebaseInAppMessaging-Beta in Frameworks */,
 				D056FC0D2E0A9E4300F4B881 /* FirebaseAnalytics in Frameworks */,
 				D056FC132E0A9E4300F4B881 /* FirebaseCore in Frameworks */,
@@ -56,11 +72,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D02D0E352E91823E00361686 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D02D0E362E91823E00361686 /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		D056FBD42E040C5200F4B881 = {
 			isa = PBXGroup;
 			children = (
 				D056FC072E0A9DC300F4B881 /* GoogleService-Info.plist */,
 				D056FBDF2E040C5200F4B881 /* ShowThat */,
+				D02D0E352E91823E00361686 /* Frameworks */,
 				D056FBDE2E040C5200F4B881 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -289,15 +314,19 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ShowThat/ShowThat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 1.0.2;
 				DEVELOPMENT_ASSET_PATHS = "\"ShowThat/Preview Content\"";
 				DEVELOPMENT_TEAM = 64J367B666;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShowThat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShowThat;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ShowThat App needs to access your photo album in order to save the QR code.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "ShowThat needs access to the camera for best quality QR codes.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ShowThat needs your location to fetch scans.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "ShowThat App needs permission to add images to your photo library to save generated QR codes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ShowThat App needs to access your photo album in order to save the QR code.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -308,12 +337,15 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ShowThat/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ShowThat.ShowThat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -332,15 +364,19 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ShowThat/ShowThat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 1.0.2;
 				DEVELOPMENT_ASSET_PATHS = "\"ShowThat/Preview Content\"";
 				DEVELOPMENT_TEAM = 64J367B666;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShowThat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShowThat;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ShowThat App needs to access your photo album in order to save the QR code.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "ShowThat needs access to the camera for best quality QR codes.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "ShowThat needs your location to fetch scans.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "ShowThat App needs permission to add images to your photo library to save generated QR codes.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "ShowThat App needs to access your photo album in order to save the QR code.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -351,12 +387,15 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ShowThat.ShowThat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;

@@ -10,6 +10,7 @@ import StoreKit
 
 struct SubscriptionExpiredAlert: ViewModifier {
     @EnvironmentObject var storeKitManager: PaymentManager
+    @EnvironmentObject var qrManager: QRCodeManager
     @State private var showingExpiredAlert = false
     @State private var showingUpgradeSheet = false
     
@@ -24,7 +25,7 @@ struct SubscriptionExpiredAlert: ViewModifier {
                 Text("Your subscription has expired. Upgrade to continue using premium features.")
             }
             .sheet(isPresented: $showingUpgradeSheet) {
-                UpgradeView(qrManager: QRCodeManager())
+                UpgradeView(qrManager: qrManager)
             }
             .onReceive(NotificationCenter.default.publisher(for: .subscriptionStatusChanged)) { _ in
                 checkSubscriptionStatus()

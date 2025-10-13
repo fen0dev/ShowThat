@@ -12,4 +12,6 @@ struct DeviceInfo: Codable {
     let browser: String?
     let osVersion: String?
     let deviceType: String? // phone, tablet, desktop
+    let os: String? // Operating system name
+    let id: String // Unique device identifier
 }

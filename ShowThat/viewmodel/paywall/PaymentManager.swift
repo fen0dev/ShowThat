@@ -66,21 +66,27 @@ class PaymentManager: NSObject, ObservableObject {
     
     // MARK: - Product Loading
     @MainActor
-    func loadProducts() async {
-        guard !productsLoaded else { return }
+    func loadProducts(force: Bool = false) async {
+        guard force || !productsLoaded else { return }
         
         isLoading = true
         
         do {
             let productIDs = ProductID.allCases.map { $0.rawValue }
-            products = try await Product.products(for: productIDs)
-            productsLoaded = true
+            let fetched = try await Product.products(for: productIDs)
+            self.products = fetched
             
-            print("Loaded \(products.count) products")
+            if fetched.isEmpty {
+                self.productsLoaded = false
+                print("[Payment Manager] No products returned. Will allow retry.")
+            } else {
+                self.productsLoaded = true
+            }
             
+            print("Loaded \(self.products.count) products")
             // Log to Firebase Analytics
             Analytics.logEvent("products_loaded", parameters: [
-                "product_count": products.count
+                "product_count": self.products.count
             ])
         } catch {
             print("Failed to load products: \(error)")
