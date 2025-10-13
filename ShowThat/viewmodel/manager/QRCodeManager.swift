@@ -136,7 +136,36 @@ class QRCodeManager: ObservableObject {
     private func loadUserProfile(userId: String) async {
         do {
             let document = try await db.collection("users").document(userId).getDocument()
-            self.userProfile = try document.data(as: UserProfile.self)
+            var profile = try document.data(as: UserProfile.self)
+            
+            // check if this is developer and upgrade to enterprise
+            if let userEmail = Auth.auth().currentUser?.email {
+                let shouldUpgrade = AuthenticationManager.getSubscriptionTier(for: userEmail) == .enterprise
+                let currentStatus = profile.subscription.tier == .enterprise
+                
+                if shouldUpgrade && !currentStatus {
+                    print("[QRCodeManager] Upgrading developer account to enterprise tier")
+                    
+                    // upgrade profile to enterprise
+                    profile.subscription = UserSubscription(
+                        tier: .enterprise,
+                        startDate: Date(),
+                        endDate: Calendar.current.date(byAdding: .year, value: 100, to: Date()),
+                        isActive: true,
+                        subscriptionId: profile.subscription.subscriptionId,
+                        customerId: profile.subscription.customerId
+                    )
+                    
+                    let updateData: [String: Any ] = [
+                        "subscription": try Firestore.Encoder().encode(profile.subscription),
+                        "updatedAt": FieldValue.serverTimestamp()
+                    ]
+                    
+                    _ = db.collection("users").document(userId).updateData(updateData)
+                }
+            }
+            
+            self.userProfile = profile
             
             // Setup real-time listener for user profile
             userListener = db.collection("users").document(userId)
@@ -147,7 +176,40 @@ class QRCodeManager: ObservableObject {
                     }
                     
                     if let snapshot = snapshot, snapshot.exists {
-                        self?.userProfile = try? snapshot.data(as: UserProfile.self)
+                        do {
+                            var updatedProfile = try snapshot.data(as: UserProfile.self)
+                            
+                            // Apply the same developer upgrade logic for real-time updates
+                            if let userEmail = Auth.auth().currentUser?.email {
+                                let shouldBeEnterprise = AuthenticationManager.getSubscriptionTier(for: userEmail) == .enterprise
+                                let currentlyEnterprise = updatedProfile.subscription.tier == .enterprise
+                                
+                                if shouldBeEnterprise && !currentlyEnterprise {
+                                    print("[QRCodeManager] Real-time upgrade: developer account to enterprise tier")
+                                    
+                                    updatedProfile.subscription = UserSubscription(
+                                        tier: .enterprise,
+                                        startDate: Date(),
+                                        endDate: Calendar.current.date(byAdding: .year, value: 100, to: Date()),
+                                        isActive: true,
+                                        subscriptionId: updatedProfile.subscription.subscriptionId,
+                                        customerId: updatedProfile.subscription.customerId
+                                    )
+                                    
+                                    // Save the updated profile
+                                    let updatedData = [
+                                        "subscription": try Firestore.Encoder().encode(updatedProfile.subscription),
+                                        "updatedAt": FieldValue.serverTimestamp()
+                                    ] as [String: Any]
+                                    
+                                    _ = self?.db.collection("users").document(userId).updateData(updatedData)
+                                }
+                            }
+                            
+                            self?.userProfile = updatedProfile
+                        } catch {
+                            print("Error decoding updated profile: \(error)")
+                        }
                     }
                 }
         } catch {
@@ -672,9 +734,12 @@ class QRCodeManager: ObservableObject {
     
     func upgradeSubscription(to tier: UserSubscription.Tier, subscriptionId: String) async throws {
         guard let userId = currentUserId else { throw QRError.notAuthenticated }
+        guard let userEmail = Auth.auth().currentUser?.email else { throw QRError.notAuthenticated }
+        
+        let actualTier = AuthenticationManager.getSubscriptionTier(for: userEmail) == .enterprise ? .enterprise : tier
         
         let subscription = UserSubscription(
-            tier: tier,
+            tier: actualTier,
             startDate: Date(),
             endDate: Calendar.current.date(byAdding: .month, value: 1, to: Date()),
             isActive: true,

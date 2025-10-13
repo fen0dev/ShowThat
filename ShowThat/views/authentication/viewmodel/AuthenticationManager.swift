@@ -30,12 +30,15 @@ class AuthenticationManager: ObservableObject {
         changeRequest.displayName = displayName
         try await changeRequest.commitChanges()
         
+        // check if it's own developer profile - Enterprise tier for myself :-)
+        let subscriptionTier = AuthenticationManager.getSubscriptionTier(for: email)
+        
         // create user profile
         let userProfile = UserProfile(
             email: email,
             displayName: displayName,
             subscription: UserSubscription(
-                tier: .free,
+                tier: subscriptionTier,
                 isActive: true
             )
         )
@@ -52,5 +55,11 @@ class AuthenticationManager: ObservableObject {
     
     func signInWithApple() {
         // to be done
+    }
+    
+    // MARK: - Helper methods for developer
+    static func getSubscriptionTier(for email: String) -> UserSubscription.Tier {
+        let devEmail = "gius.invest@gmail.com"
+        return (email == devEmail) ? .enterprise : .free
     }
 }

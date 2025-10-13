@@ -272,10 +272,21 @@ class PaymentManager: NSObject, ObservableObject {
                 _ = db.collection("users").document(userId).updateData(data)
             } else {
                 // Create new user document with subscription
+                let userEmail = Auth.auth().currentUser?.email ?? ""
+                let actualSub = AuthenticationManager.getSubscriptionTier(for: userEmail) == .enterprise
+                    ? UserSubscription(
+                        tier: .enterprise,
+                        startDate: subscription.startDate,
+                        endDate: subscription.endDate,
+                        isActive: true,
+                        subscriptionId: subscription.subscriptionId,
+                        customerId: subscription.customerId
+                    ) : subscription
+                
                 let newUser = UserProfile(
                     email: Auth.auth().currentUser?.email ?? "",
                     displayName: Auth.auth().currentUser?.displayName,
-                    subscription: subscription
+                    subscription: actualSub
                 )
                 
                 _ = db.collection("users").document(userId).setData(from: newUser)

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D02D0E372E91823E00361686 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D02D0E362E91823E00361686 /* StoreKit.framework */; };
 		D056FC082E0A9DC400F4B881 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D056FC072E0A9DC300F4B881 /* GoogleService-Info.plist */; };
 		D056FC0B2E0A9E4300F4B881 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC0A2E0A9E4300F4B881 /* FirebaseAI */; };
 		D056FC0D2E0A9E4300F4B881 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC0C2E0A9E4300F4B881 /* FirebaseAnalytics */; };
@@ -20,6 +19,8 @@
 		D056FC1B2E0A9E4300F4B881 /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC1A2E0A9E4300F4B881 /* FirebaseInAppMessaging-Beta */; };
 		D056FC1D2E0A9E4300F4B881 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC1C2E0A9E4300F4B881 /* FirebaseMessaging */; };
 		D056FC1F2E0A9E4300F4B881 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = D056FC1E2E0A9E4300F4B881 /* FirebaseStorage */; };
+		D05ED4402E9D44230056C8F7 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = D05ED43F2E9D44230056C8F7 /* Algorithms */; };
+		D05ED4412E9D443A0056C8F7 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D02D0E362E91823E00361686 /* StoreKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,14 +58,15 @@
 				D056FC152E0A9E4300F4B881 /* FirebaseDatabase in Frameworks */,
 				D056FC192E0A9E4300F4B881 /* FirebaseFirestoreCombine-Community in Frameworks */,
 				D056FC1D2E0A9E4300F4B881 /* FirebaseMessaging in Frameworks */,
-				D02D0E372E91823E00361686 /* StoreKit.framework in Frameworks */,
 				D056FC1B2E0A9E4300F4B881 /* FirebaseInAppMessaging-Beta in Frameworks */,
 				D056FC0D2E0A9E4300F4B881 /* FirebaseAnalytics in Frameworks */,
+				D05ED4402E9D44230056C8F7 /* Algorithms in Frameworks */,
 				D056FC132E0A9E4300F4B881 /* FirebaseCore in Frameworks */,
 				D056FC0F2E0A9E4300F4B881 /* FirebaseAppCheck in Frameworks */,
 				D056FC0B2E0A9E4300F4B881 /* FirebaseAI in Frameworks */,
 				D056FC1F2E0A9E4300F4B881 /* FirebaseStorage in Frameworks */,
 				D056FC112E0A9E4300F4B881 /* FirebaseAuth in Frameworks */,
+				D05ED4412E9D443A0056C8F7 /* StoreKit.framework in Frameworks */,
 				D056FC172E0A9E4300F4B881 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -129,6 +131,7 @@
 				D056FC1A2E0A9E4300F4B881 /* FirebaseInAppMessaging-Beta */,
 				D056FC1C2E0A9E4300F4B881 /* FirebaseMessaging */,
 				D056FC1E2E0A9E4300F4B881 /* FirebaseStorage */,
+				D05ED43F2E9D44230056C8F7 /* Algorithms */,
 			);
 			productName = ShowThat;
 			productReference = D056FBDD2E040C5200F4B881 /* ShowThat.app */;
@@ -160,6 +163,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				D056FC092E0A9E4300F4B881 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				D05ED43E2E9D44230056C8F7 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D056FBDE2E040C5200F4B881 /* Products */;
@@ -317,8 +321,19 @@
 				CURRENT_PROJECT_VERSION = 1.0.2;
 				DEVELOPMENT_ASSET_PATHS = "\"ShowThat/Preview Content\"";
 				DEVELOPMENT_TEAM = 64J367B666;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShowThat/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShowThat;
@@ -367,8 +382,19 @@
 				CURRENT_PROJECT_VERSION = 1.0.2;
 				DEVELOPMENT_ASSET_PATHS = "\"ShowThat/Preview Content\"";
 				DEVELOPMENT_TEAM = 64J367B666;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShowThat/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShowThat;
@@ -439,6 +465,14 @@
 				minimumVersion = 11.15.0;
 			};
 		};
+		D05ED43E2E9D44230056C8F7 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -496,6 +530,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D056FC092E0A9E4300F4B881 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		D05ED43F2E9D44230056C8F7 /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D05ED43E2E9D44230056C8F7 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
