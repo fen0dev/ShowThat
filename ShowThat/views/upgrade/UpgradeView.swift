@@ -383,3 +383,15 @@ struct PrimaryButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
     }
 }
+
+struct PrimaryButtonStylePlain: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(.black)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 15)
+            .background(.white)
+            .cornerRadius(25)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+    }
+}

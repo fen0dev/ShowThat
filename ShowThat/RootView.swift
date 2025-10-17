@@ -10,9 +10,13 @@ import SwiftUI
 @available(iOS 17.0, *)
 struct RootView: View {
     @EnvironmentObject var authState: AuthState
+    @StateObject private var onboardingManager = OnboardingManager()
     var body: some View {
         Group {
-            if authState.isAuthenticated {
+            if !onboardingManager.isCompleted {
+                OnboardingView()
+                    .environmentObject(onboardingManager)
+            } else if authState.isAuthenticated {
                 MainTabView()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing),
@@ -27,6 +31,7 @@ struct RootView: View {
             }
         }
         .animation(.spring(), value: authState.isAuthenticated)
+        .animation(.spring(), value: onboardingManager.isCompleted)
         .withAlerts()
         .subscriptionExpiredAlert()
     }
