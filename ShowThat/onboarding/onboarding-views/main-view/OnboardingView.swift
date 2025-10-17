@@ -34,6 +34,9 @@ struct OnboardingView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .disabled(manager.isCompleted)
+                .onChange(of: manager.currentStep) { _, _ in
+                    HapticManager.shared.lightImpact()
+                }
                 
                 // bottom controls
                 OnboardingControlsView(manager: manager)
@@ -45,6 +48,7 @@ struct OnboardingView: View {
                 // last step - complete onboarding after delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     manager.completeOnboarding()
+                    HapticManager.shared.mediumImpact()
                     dismiss()
                 }
             }

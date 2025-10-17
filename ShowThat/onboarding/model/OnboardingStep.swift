@@ -55,7 +55,7 @@ extension OnboardingStep {
              interactiveElements: []
          ),
          OnboardingStep(
-             title: "Create your first QR",
+             title: "Create",
              subtitle: "Choose your content type",
              description: "URLs, business cards, WiFi, email and much more. Every QR code can be customized with your unique style.",
              icon: "plus.circle.fill",
@@ -72,7 +72,7 @@ extension OnboardingStep {
              ]
          ),
          OnboardingStep(
-             title: "Customize the design",
+             title: "Customize",
              subtitle: "Make your QR code unique",
              description: "Choose from Minimal, Branded, Gradient or Glass styles. Add your logo and custom colors for a professional result.",
              icon: "paintbrush.fill",
@@ -89,8 +89,8 @@ extension OnboardingStep {
              ]
          ),
          OnboardingStep(
-             title: "Share and analyze",
-             subtitle: "Track your performance",
+             title: "Share & Outreach",
+             subtitle: "Track your QR performances",
              description: "Share your QR codes and monitor how many times they get scanned. Get detailed insights about your content.",
              icon: "chart.line.uptrend.xyaxis",
              color: .orange,
@@ -106,7 +106,7 @@ extension OnboardingStep {
              ]
          ),
          OnboardingStep(
-             title: "You're all set!",
+             title: "Ready!",
              subtitle: "Start creating amazing QR codes",
              description: "You've completed the guided tour. Now you can start creating professional QR codes and tracking their performance.",
              icon: "checkmark.circle.fill",

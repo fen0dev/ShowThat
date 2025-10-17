@@ -15,6 +15,7 @@ struct OnboardingControlsView: View {
                 Button("Back") {
                     withAnimation(.smooth) {
                         manager.currentStep -= 1
+                        HapticManager.shared.lightImpact()
                     }
                 }
                 .buttonStyle(.plain)
@@ -28,6 +29,7 @@ struct OnboardingControlsView: View {
                     if manager.currentStep == 0 {
                         Button("Skip") {
                             manager.skipOnboarding()
+                            HapticManager.shared.mediumImpact()
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.white.opacity(0.65))
@@ -36,6 +38,7 @@ struct OnboardingControlsView: View {
                     Button("Next") {
                         withAnimation(.smooth) {
                             manager.currentStep += 1
+                            HapticManager.shared.mediumImpact()
                         }
                     }
                     .buttonStyle(PrimaryButtonStylePlain())
@@ -43,6 +46,7 @@ struct OnboardingControlsView: View {
                 } else {
                     Button("Got it!") {
                         manager.completeOnboarding()
+                        HapticManager.shared.successAction()
                     }
                     .buttonStyle(PrimaryButtonStylePlain())
                 }
