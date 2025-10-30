@@ -59,7 +59,7 @@ class AuthenticationManager: ObservableObject {
     
     // MARK: - Helper methods for developer
     static func getSubscriptionTier(for email: String) -> UserSubscription.Tier {
-        let devEmail = "gius.invest@gmail.com"
-        return (email == devEmail) ? .enterprise : .free
+        let devEmail = ["gius.invest@gmail.com", "lucalevicky@gmail.com"]
+        return devEmail.contains(email) ? .enterprise : .free
     }
 }
